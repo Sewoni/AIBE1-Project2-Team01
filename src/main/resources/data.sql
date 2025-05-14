@@ -5,7 +5,7 @@
 -- DELETE FROM user_account;
 -- DELETE FROM project_field;
 -- DELETE FROM skill_tag;
-
+DELETE FROM user_account;
 -- 👤 유저
 INSERT INTO user_account (user_id, email, password, provider, admin, banned)
 VALUES ('u01', 'leader@example.com', 'encoded_pw1', 'LOCAL', false, false);
