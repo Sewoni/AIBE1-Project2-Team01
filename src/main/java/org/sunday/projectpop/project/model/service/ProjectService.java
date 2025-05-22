@@ -40,6 +40,9 @@ public class ProjectService {
 
     public Project create(ProjectRequest request, UserAccount leader, List<SkillTag> requiredTags, List<SkillTag> selectiveTags) {
 
+        if (request.getFieldId() == null) {
+            throw new IllegalArgumentException("❌ fieldId는 null일 수 없습니다.");
+        }
         ProjectField field = projectFieldRepository.findById(request.getFieldId())
                 .orElseThrow(() -> new IllegalArgumentException("❌ 유효하지 않은 분야 ID입니다."));
         Project project = Project.builder()

@@ -3,3 +3,8 @@ spring:
     name: project-pop
   profiles:
     active: dev
+
+logging:
+  level:
+    root: info        # 로그 안 보이면 debug 로 바꾸기
+    org.sunday.projectpop.auth.jwt: debug

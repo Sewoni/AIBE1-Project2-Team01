@@ -1,6 +1,8 @@
 package org.sunday.projectpop.project.controller;
 
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 
 import lombok.RequiredArgsConstructor;
@@ -46,15 +48,18 @@ public class ProjectController {
     private final SkillTagRepository skillTagRepository;
     // 🖼️ 공고 작성 폼 (HTML 렌더링)
     @GetMapping("/create")
-    public String showCreateForm(@RequestParam(required = false) String mode,
-                                 @AuthenticationPrincipal UserDetails userDetails,
+    @PreAuthorize("isAuthenticated()")
+    public String showCreateForm(@RequestParam(required = false) String mode,                             @AuthenticationPrincipal UserDetails userDetails,
                                  Model model) {
+//    public String showCreateForm(@RequestParam(required = false) String mode,
+//                              HttpServletRequest request,
+//                              Model model) {
         ProjectRequest projectRequest;
 
         if ("llm".equals(mode)) {
             // 1. 프롬프트 생성 및 Gemini 호출
-            //String userId = userDetails.getUsername(); // 또는 임시 "u01"
-            String userId = "u01";
+            String userId = userDetails.getUsername(); // 또는 임시 "u01"
+            //String userId = (String) request.getAttribute("userId");
             String prompt = projectLLMService.generatePrompt(userId);
             GeminiResponse response = geminiLLMService.getGeneratedProject(prompt);
 
@@ -93,9 +98,14 @@ public class ProjectController {
 
     // 📨 폼 제출용 공고 생성 (서버 렌더링용)
     @PostMapping("/submit")
-    public String submitProject(@ModelAttribute ProjectRequest request) {
-        String userId = "test-user-id";
+    public String submitProject(@ModelAttribute ProjectRequest request,
+                                @AuthenticationPrincipal UserDetails userDetails) {
+        String userId = userDetails.getUsername();
+
         UserAccount leader = userAccountService.getUserById(userId);
+        List<Long> requiredTagIds = request.getRequiredTagIds() != null ? request.getRequiredTagIds() : List.of();
+        List<Long> selectiveTagIds = request.getSelectiveTagIds() != null ? request.getSelectiveTagIds() : List.of();
+
         List<SkillTag> requiredTags = skillTagService.getTagsByIds(request.getRequiredTagIds());
         List<SkillTag> selectiveTags = skillTagService.getTagsByIds(request.getSelectiveTagIds());
 
@@ -208,11 +218,12 @@ public String viewProjectDetail(@RequestParam("projectId") String projectId, Mod
 }
 
    @PostMapping("/apply")
-    public String apply(@RequestParam("projectId") String projectId,
+   public String apply(@RequestParam("projectId") String projectId,
                         @AuthenticationPrincipal UserDetails userDetails,
                         RedirectAttributes redirectAttributes) {
         try {
-            applicationService.applyToProject(projectId, userDetails.getUsername());
+            String userId = userDetails.getUsername();
+            applicationService.applyToProject(projectId, userId);
             redirectAttributes.addFlashAttribute("success", "지원이 완료되었습니다!");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", e.getMessage());

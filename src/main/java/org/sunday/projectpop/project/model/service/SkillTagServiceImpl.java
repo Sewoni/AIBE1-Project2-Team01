@@ -21,6 +21,9 @@ public class SkillTagServiceImpl implements SkillTagService {
 
     @Override
     public List<SkillTag> getTagsByIds(List<Long> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return List.of(); // 빈 리스트로 방어
+        }
         return skillTagRepository.findAllById(ids);
     }
 }
