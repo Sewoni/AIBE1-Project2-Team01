@@ -44,6 +44,10 @@ jwt:
   # openssl rand -base64 32
   secret: ${JWT_SECRET}
   expiration-ms: ${JWT_EXPIRATION_MS} # 1시간
+llm:
+  api:
+    key: ${LLM_API_KEY}
+
 # 화면단 url
 front-end:
   redirect: ${FRONT_END_REDIRECT}
