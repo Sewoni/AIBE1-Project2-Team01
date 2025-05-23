@@ -3,3 +3,8 @@ spring:
     name: project-pop
   profiles:
     active: dev
+
+logging:
+  level:
+    root: DEBUG
+    org.sunday.projectpop: DEBUG

@@ -1,5 +1,6 @@
 package org.sunday.projectpop.project.controller;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 
@@ -28,6 +29,9 @@ import org.springframework.web.bind.annotation.*;
 
 
 import java.util.List;
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 @Controller
 @RequestMapping("/projects")
 @RequiredArgsConstructor
@@ -53,8 +57,8 @@ public class ProjectController {
 
         if ("llm".equals(mode)) {
             // 1. 프롬프트 생성 및 Gemini 호출
-            //String userId = userDetails.getUsername(); // 또는 임시 "u01"
-            String userId = "u01";
+            String userId = userDetails.getUsername(); // 또는 임시 "u01"
+            // String userId = "u01";
             String prompt = projectLLMService.generatePrompt(userId);
             GeminiResponse response = geminiLLMService.getGeneratedProject(prompt);
 
@@ -93,12 +97,24 @@ public class ProjectController {
 
     // 📨 폼 제출용 공고 생성 (서버 렌더링용)
     @PostMapping("/submit")
-    public String submitProject(@ModelAttribute ProjectRequest request) {
-        String userId = "test-user-id";
+    public String submitProject(@ModelAttribute ProjectRequest request,@AuthenticationPrincipal UserDetails userDetails) {
+        if (userDetails == null) {
+            throw new IllegalStateException("인증되지 않은 사용자입니다. JWT 인증이 제대로 작동하지 않았습니다.");
+        }
+         String userId = userDetails.getUsername();
         UserAccount leader = userAccountService.getUserById(userId);
+        List<Long> requiredIds = request.getRequiredTagIds() != null ? request.getRequiredTagIds() : List.of();
+        List<Long> selectiveIds = request.getSelectiveTagIds() != null ? request.getSelectiveTagIds() : List.of();
         List<SkillTag> requiredTags = skillTagService.getTagsByIds(request.getRequiredTagIds());
         List<SkillTag> selectiveTags = skillTagService.getTagsByIds(request.getSelectiveTagIds());
 
+        log.debug("📌 @AuthenticationPrincipal userId: {}", userId);
+        System.out.println("✅ userId: " + userId);
+        System.out.println("✅ leader: " + leader);
+
+        System.out.println("✅ fieldId: " + request.getFieldId());
+        System.out.println("✅ requiredTagIds: " + request.getRequiredTagIds());
+        System.out.println("✅ selectiveTagIds: " + request.getSelectiveTagIds());
         projectService.create(request, leader, requiredTags, selectiveTags);
         return "redirect:/projects";
     }
